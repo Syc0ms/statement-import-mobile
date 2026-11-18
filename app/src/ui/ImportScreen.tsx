@@ -30,37 +30,44 @@ export function ImportScreen({ controller, onOpenDiagnostics }: { controller: Im
   const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: palette.canvas }}
-      contentContainerStyle={{
-        paddingTop: insets.top + space.xs,
-        paddingBottom: insets.bottom + space.xxl,
-        paddingHorizontal: space.md,
-        gap: space.md,
-      }}
-      contentInsetAdjustmentBehavior="never"
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, minHeight: HIT }}>
-        <Text style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600', flexShrink: 1 }]}>Выписка · импорт</Text>
-        <PressableScale
-          onPress={onOpenDiagnostics}
-          accessibilityRole="button"
-          accessibilityLabel="Тест-панель"
-          accessibilityHint="Открывает диагностику тестового сервера. Не часть продукта."
-          hitSlop={8}
-          style={{
-            minHeight: 36,
-            paddingHorizontal: 12,
-            borderRadius: radius.chip,
-            backgroundColor: palette.sunken,
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600' }]}>Тест-панель</Text>
-        </PressableScale>
-      </View>
-      <ViewForState view={view} controller={controller} />
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: palette.canvas }}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: palette.canvas }}
+        contentContainerStyle={{
+          paddingTop: insets.top + space.xs,
+          paddingBottom: insets.bottom + space.xxl,
+          paddingHorizontal: space.md,
+          gap: space.md,
+        }}
+        contentInsetAdjustmentBehavior="never"
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, minHeight: HIT }}>
+          <Text style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600', flexShrink: 1 }]}>Выписка · импорт</Text>
+          <PressableScale
+            onPress={onOpenDiagnostics}
+            accessibilityRole="button"
+            accessibilityLabel="Тест-панель"
+            accessibilityHint="Открывает диагностику тестового сервера. Не часть продукта."
+            hitSlop={8}
+            style={{
+              minHeight: 36,
+              paddingHorizontal: 12,
+              borderRadius: radius.chip,
+              backgroundColor: palette.sunken,
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600' }]}>Тест-панель</Text>
+          </PressableScale>
+        </View>
+        <ViewForState view={view} controller={controller} />
+      </ScrollView>
+      {/* Keeps scrolled content from showing through the status bar. */}
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: palette.canvas }}
+      />
+    </View>
   );
 }
 
@@ -427,24 +434,28 @@ function ResultSection({
             style={{
               borderRadius: radius.row,
               backgroundColor: palette.sunken,
-              padding: space.md,
-              gap: space.sm,
+              paddingTop: space.md,
+              paddingBottom: space.xxs,
+              paddingHorizontal: space.md,
+              gap: space.xxs,
             }}
           >
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: space.xs }}>
               <Text style={[type.headline, { color: palette.ink }]}>{item.merchant}</Text>
               <Text style={[type.headline, type.tabular, { color: palette.ink }]}>{formatMinor(item.amountMinor, currency)}</Text>
             </View>
-            <Body size="footnote" style={type.tabular}>
-              {cadenceLabel(item.cadence)} · последнее {formatIsoDate(item.lastSeen)}
-            </Body>
-            <View style={{ alignSelf: 'flex-start', marginLeft: -space.md }}>
-              <Button
-                label="Подробнее"
-                variant="quiet"
-                onPress={() => onDetails(item)}
-                accessibilityHint={`Открывает карточку списания ${item.merchant}`}
-              />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: space.xs }}>
+              <Body size="footnote" style={[type.tabular, { flexShrink: 1 }]}>
+                {cadenceLabel(item.cadence)} · последнее {formatIsoDate(item.lastSeen)}
+              </Body>
+              <View style={{ marginRight: -space.md }}>
+                <Button
+                  label="Подробнее"
+                  variant="quiet"
+                  onPress={() => onDetails(item)}
+                  accessibilityHint={`Открывает карточку списания ${item.merchant}`}
+                />
+              </View>
             </View>
           </View>
         ))}

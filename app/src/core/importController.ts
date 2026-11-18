@@ -56,7 +56,7 @@ export interface ControllerTiming {
 }
 
 export const DEFAULT_TIMING: ControllerTiming = {
-  lookupBackoffMs: [1500, 3000, 6000, 12_000, 20_000],
+  lookupBackoffMs: [3000, 5000, 10_000, 20_000, 30_000],
   pollBackoffMs: [300, 500, 800, 1300, 2000, 3000, 5000],
 };
 

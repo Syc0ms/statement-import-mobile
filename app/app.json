@@ -6,7 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "dev.candidate.statementimport",
@@ -14,7 +17,8 @@
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
         },
-        "NSLocalNetworkUsageDescription": "Test builds only: connects to the local mock API on your network."
+        "NSLocalNetworkUsageDescription": "Test builds only: connects to the local mock API on your network.",
+        "CFBundleDisplayName": "Statement Import"
       }
     },
     "android": {
