@@ -169,10 +169,23 @@ Release-сборка.
 
 ### iOS — симулятор
 
-Не использовался для итоговой проверки (по решению владельца проверка шла на физическом iPhone).
-Команды для ревьюера: `npm run mock`, затем в `app/`: `npx expo run:ios` (или `xcodebuild … -destination
-'platform=iOS Simulator,name=<имя>'` + `xcrun simctl install booted <app>`). Адрес по умолчанию
-`http://127.0.0.1:8787` в симуляторе работает без настройки.
+Матрица приёмки записана на симуляторе (см. «Фактические результаты»). Адрес по умолчанию
+`http://127.0.0.1:8787` работает без настройки.
+
+```bash
+npm run mock
+cd app
+npx expo prebuild --platform ios --no-install && (cd ios && LANG=en_US.UTF-8 pod install)
+xcodebuild -workspace ios/StatementImport.xcworkspace -scheme StatementImport -configuration Release \
+  -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath ~/Library/Developer/Xcode/DerivedData/StatementImport-sim build \
+&& xcrun simctl install booted ~/Library/Developer/Xcode/DerivedData/StatementImport-sim/Build/Products/Release-iphonesimulator/StatementImport.app \
+&& xcrun simctl launch booted dev.candidate.statementimport
+```
+
+`npx expo run:ios` тоже подходит; на этой машине он может падать с «Can't determine id of
+Simulator app» — тогда команды выше. Файлы для picker'а: перетащите фикстуры в окно
+симулятора или скопируйте их в «Файлы → На iPhone».
 
 ### Android
 
@@ -231,14 +244,32 @@ node tools/record-mock-state.mjs http://127.0.0.1:8787 docs/evidence/run.jsonl  
 
 ### iOS
 
-| | |
-|---|---|
-| Устройство | iPhone 14 Pro (iPhone15,2), **iOS 27.2.1** (24B156), физический, по Wi‑Fi |
-| Сборка | Release, Expo SDK 58 / React Native 0.88.1, Xcode 27.2, подпись — личная команда разработчика |
-| Mock | `HOST=0.0.0.0` на Mac, `http://<IP Mac>:8787` |
+| | Симулятор | Физическое устройство |
+|---|---|---|
+| Устройство | iPhone 16 Pro Simulator, iOS 18.6 (22G86) | iPhone 14 Pro (iPhone15,2), **iOS 27.2.1** (24B156), по Wi‑Fi |
+| Сборка | Release, Expo SDK 58 / React Native 0.88.1, Xcode 27.2 | то же, подпись личной командой разработчика |
+| Mock | `http://127.0.0.1:8787` | `HOST=0.0.0.0`, `http://<IP Mac>:8787` |
 
-<!-- DEVICE_RESULTS -->
-Результаты прогона на устройстве заполняются по журналу `docs/evidence/device-run-mock-state.jsonl`.
+**Симулятор — матрица приёмки пройдена целиком (19.11.2026).** Видео с подписями:
+[`docs/evidence/ios-sim/walkthrough.mp4`](docs/evidence/ios-sim/walkthrough.mp4) (1 мин);
+полные записи без монтажа — `docs/evidence/ios-sim/clips/`; снимки `GET /__test/state` до и
+после — `docs/evidence/ios-sim/*.json`.
+
+| Сценарий | Что видно на экране | `/__test/state` до → после |
+|---|---|---|
+| happy (`statement.csv`) | picker → подтверждение (112 Б, CSV по содержимому) → «В очереди» → «Обрабатывается» → «Отчёт готов» 151.99 AUD → «Подробнее» → удаление → «Удалено с сервера» (GET deleted/5) | createRequests 0→1, newJobs 0→1, acceptedBytes 0→112, deleteRequests 0→1; SHA-256 на mock = SHA-256 фикстуры |
+| lost_ack + перезапуск (`statement.pdf`) | «Исход отправки неизвестен», отсчёт до проверки по ключу; приложение убито (`simctl terminate`) и открыто снова → by-key → «Отчёт готов» | createRequests 0→1, **newJobs 0→1**, duplicateHits 0, acceptedBytes 33882 |
+| stale_status | первый GET — ready/3; «Обновить статус» → processing/2 проигнорирован, экран остаётся «Отчёт готов» | newJobs 1; задание на mock ready/3 |
+| delete_failure | «Удалить» → 503 → «Не удалено, данные остаются на сервере»; happy → «Повторить удаление» тем же ключом → «Удалено с сервера» | deleteRequests 0→1 (503) →2; задание ready/3 → deleted/5 |
+| spoofed + oversize | «Это не PDF»; «Файл больше 10 МиБ» (по метаданным, содержимое не читалось) | **createRequests 1→1** (не изменился) |
+
+**Физический iPhone 14 Pro:** Release-сборка собрана, установлена (`devicectl`) и запускается;
+mock доступен по LAN. Сценарии на телефоне проходит владелец вручную по
+`docs/VIDEO_SCRIPT.md` с записью экрана iOS — результаты: _<заполнить после прогона>_.
+
+Найдено и исправлено во время прогона: долгий показ системного picker'а без обратной связи
+(добавлен индикатор), формулировка отказа по размеру (точные байты), подпись шага «Отправка»
+после восстановления по ключу. Видео записано на сборке до этих правок текста.
 
 ### Android — НЕ ПРОВЕРЕНО
 

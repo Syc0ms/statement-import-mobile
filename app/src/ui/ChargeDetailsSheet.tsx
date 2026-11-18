@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatIsoDate, formatMinor } from '../core/money';
 import type { RecurringCharge } from '../core/types';
 import { Body, Button, Card, FactRow, Heading } from './components';
-import { space, type, usePalette } from './theme';
+import { SCALE, space, type, usePalette } from './theme';
 
 const CADENCE: Record<string, string> = {
   monthly: 'Ежемесячно',
@@ -45,7 +45,7 @@ export function ChargeDetailsSheet({
           <View style={{ gap: space.xxs }}>
             <Body size="footnote">Регулярное списание</Body>
             <Heading level="largeTitle">{charge.merchant}</Heading>
-            <Text style={[type.amountLarge, { color: palette.ink }]}>{formatMinor(charge.amountMinor, currency)}</Text>
+            <Text maxFontSizeMultiplier={SCALE.display} style={[type.amountLarge, { color: palette.ink }]}>{formatMinor(charge.amountMinor, currency)}</Text>
           </View>
           <Card style={{ paddingVertical: space.xs }}>
             <FactRow label="Периодичность" value={cadenceLabel(charge.cadence)} stacked={stacked} />

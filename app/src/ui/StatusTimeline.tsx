@@ -11,7 +11,7 @@ import Animated, {
 
 import type { TimelineStep } from '../core/presentation';
 import { BarGlyph, CheckGlyph } from './components';
-import { space, toneColor, type, usePalette, type Palette } from './theme';
+import { SCALE, space, toneColor, type, usePalette, type Palette } from './theme';
 
 const DOT = 22;
 const EASE = { duration: 260, reduceMotion: ReduceMotion.System };
@@ -132,11 +132,11 @@ export function StatusTimeline({ steps }: { steps: TimelineStep[] }) {
               ) : null}
             </View>
             <View style={{ flex: 1, paddingBottom: next ? space.md : 0, paddingTop: 1 }}>
-              <Text style={[type.callout, { color: labelColor, fontWeight: step.state === 'pending' ? '400' : '600' }]}>
+              <Text maxFontSizeMultiplier={SCALE.content} style={[type.callout, { color: labelColor, fontWeight: step.state === 'pending' ? '400' : '600' }]}>
                 {step.label}
               </Text>
               {step.detail ? (
-                <Text style={[type.footnote, type.tabular, { color: detailColor, marginTop: 2 }]}>{step.detail}</Text>
+                <Text maxFontSizeMultiplier={SCALE.content} style={[type.footnote, type.tabular, { color: detailColor, marginTop: 2 }]}>{step.detail}</Text>
               ) : null}
             </View>
           </Animated.View>

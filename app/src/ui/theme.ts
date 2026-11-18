@@ -94,6 +94,12 @@ export const type = {
   mono: { fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }), fontSize: 12, lineHeight: 16, ...tabular } as TextStyle,
 };
 
+/**
+ * Dynamic Type caps. Content text scales up to 2x (layouts stack instead of squeezing);
+ * chrome such as the header and chips is capped lower so it never crowds content.
+ */
+export const SCALE = { content: 2, chrome: 1.4, display: 1.6 } as const;
+
 /** Minimum touch target. */
 export const HIT = 44;
 

@@ -12,7 +12,7 @@ import { pickStatement } from '../platform/picker';
 import { ChargeDetailsSheet, cadenceLabel } from './ChargeDetailsSheet';
 import { Body, Button, Card, Chip, FactRow, Heading, PressableScale } from './components';
 import { StatusTimeline } from './StatusTimeline';
-import { HIT, radius, space, toneColor, type, usePalette } from './theme';
+import { HIT, SCALE, radius, space, toneColor, type, usePalette } from './theme';
 
 const enter = (index: number) =>
   FadeInDown.duration(320).delay(index * 100).withInitialValues({ transform: [{ translateY: 12 }] }).reduceMotion(ReduceMotion.System);
@@ -41,8 +41,15 @@ export function ImportScreen({ controller, onOpenDiagnostics }: { controller: Im
         }}
         contentInsetAdjustmentBehavior="never"
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, minHeight: HIT }}>
-          <Text style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600', flexShrink: 1 }]}>Выписка · импорт</Text>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, minHeight: HIT }}
+        >
+          <Text
+            maxFontSizeMultiplier={SCALE.chrome}
+            style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600', flexShrink: 1 }]}
+          >
+            Выписка · импорт
+          </Text>
           <PressableScale
             onPress={onOpenDiagnostics}
             accessibilityRole="button"
@@ -57,7 +64,9 @@ export function ImportScreen({ controller, onOpenDiagnostics }: { controller: Im
               justifyContent: 'center',
             }}
           >
-            <Text style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600' }]}>Тест-панель</Text>
+            <Text maxFontSizeMultiplier={SCALE.chrome} style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600' }]}>
+              Тест-панель
+            </Text>
           </PressableScale>
         </View>
         <ViewForState view={view} controller={controller} />
@@ -432,7 +441,7 @@ function ResultSection({
         <Body size="footnote" tone="secondary">
           Регулярные списания в месяц
         </Body>
-        <Text style={[type.amountLarge, { color: palette.ink }]} accessibilityLabel={`Итого ${formatMinor(total, currency)} в месяц`}>
+        <Text maxFontSizeMultiplier={SCALE.display} style={[type.amountLarge, { color: palette.ink }]} accessibilityLabel={`Итого ${formatMinor(total, currency)} в месяц`}>
           {formatMinor(total, currency)}
         </Text>
         <Body size="footnote" tone="tertiary">
@@ -458,8 +467,8 @@ function ResultSection({
             }}
           >
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: space.xs }}>
-              <Text style={[type.headline, { color: palette.ink }]}>{item.merchant}</Text>
-              <Text style={[type.headline, type.tabular, { color: palette.ink }]}>{formatMinor(item.amountMinor, currency)}</Text>
+              <Text maxFontSizeMultiplier={SCALE.content} style={[type.headline, { color: palette.ink }]}>{item.merchant}</Text>
+              <Text maxFontSizeMultiplier={SCALE.content} style={[type.headline, type.tabular, { color: palette.ink }]}>{formatMinor(item.amountMinor, currency)}</Text>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: space.xs }}>
               <Body size="footnote" style={[type.tabular, { flexShrink: 1 }]}>

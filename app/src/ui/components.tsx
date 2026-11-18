@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { HIT, radius, space, type, usePalette } from './theme';
+import { HIT, SCALE, radius, space, type, usePalette } from './theme';
 
 const PRESS_EASE = { duration: 140, reduceMotion: ReduceMotion.System };
 
@@ -106,7 +106,7 @@ export function Button({
       {busy ? <ActivityIndicator size="small" color={textColor} /> : null}
       <Text
         style={[type.headline, { color: textColor, textAlign: 'center', fontWeight: variant === 'quiet' ? '500' : '600' }]}
-        maxFontSizeMultiplier={2}
+        maxFontSizeMultiplier={SCALE.content}
       >
         {label}
       </Text>
@@ -141,7 +141,7 @@ export function Heading({ children, style, level = 'title', ...rest }: TextProps
       accessibilityRole="header"
       textBreakStrategy="balanced"
       lineBreakStrategyIOS="standard"
-      maxFontSizeMultiplier={level === 'largeTitle' ? 1.6 : 2}
+      maxFontSizeMultiplier={level === 'largeTitle' ? SCALE.display : SCALE.content}
       {...rest}
       style={[type[level], { color: palette.ink }, style]}
     >
@@ -161,7 +161,7 @@ export function Body({
   const palette = usePalette();
   const color = tone === 'primary' ? palette.ink : tone === 'secondary' ? palette.inkSecondary : palette.inkTertiary;
   return (
-    <Text lineBreakStrategyIOS="standard" textBreakStrategy="highQuality" {...rest} style={[type[size], { color }, style]}>
+    <Text lineBreakStrategyIOS="standard" textBreakStrategy="highQuality" maxFontSizeMultiplier={SCALE.content} {...rest} style={[type[size], { color }, style]}>
       {children}
     </Text>
   );
@@ -182,7 +182,7 @@ export function Chip({ label, ink, tint, busy = false }: { label: string; ink: s
       }}
     >
       {busy ? <ActivityIndicator size="small" color={ink} style={{ transform: [{ scale: 0.7 }], marginLeft: -4, marginRight: -4 }} /> : null}
-      <Text style={[type.footnote, { color: ink, fontWeight: '600' }]} maxFontSizeMultiplier={1.8}>
+      <Text style={[type.footnote, { color: ink, fontWeight: '600' }]} maxFontSizeMultiplier={SCALE.chrome}>
         {label}
       </Text>
     </View>
@@ -202,8 +202,9 @@ export function FactRow({ label, value, mono = false, stacked }: { label: string
       accessible
       accessibilityLabel={`${label}: ${value}`}
     >
-      <Text style={[type.callout, { color: palette.inkSecondary, flexShrink: 0 }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={SCALE.content} style={[type.callout, { color: palette.inkSecondary, flexShrink: 0 }]}>{label}</Text>
       <Text
+        maxFontSizeMultiplier={SCALE.content}
         style={[mono ? type.mono : type.callout, type.tabular, { color: palette.ink, flexShrink: 1, textAlign: stacked ? 'left' : 'right' }]}
         selectable={mono}
       >

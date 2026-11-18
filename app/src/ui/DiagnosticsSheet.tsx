@@ -7,7 +7,7 @@ import type { ImportController } from '../core/importController';
 import type { ApiSettings } from '../platform/storage';
 import { DEFAULT_API_BASE_URL } from '../platform/storage';
 import { Body, Button, Card, FactRow, Heading, PressableScale } from './components';
-import { HIT, radius, space, type, usePalette } from './theme';
+import { HIT, SCALE, radius, space, type, usePalette } from './theme';
 
 const SCENARIO_LABEL: Record<MockScenario, string> = {
   happy: 'happy',
@@ -82,7 +82,7 @@ export function DiagnosticsSheet({
           <Button label="Готово" variant="quiet" onPress={onClose} />
         </View>
         <View style={{ backgroundColor: palette.warningTint, borderRadius: radius.row, padding: space.md, gap: 4 }}>
-          <Text style={[type.callout, { color: palette.warning, fontWeight: '600' }]}>Только для проверки</Text>
+          <Text maxFontSizeMultiplier={SCALE.content} style={[type.callout, { color: palette.warning, fontWeight: '600' }]}>Только для проверки</Text>
           <Body size="footnote" tone="primary">
             Управляет локальным mock через маршруты /__test. Не часть продукта и не используется в основном сценарии.
           </Body>
@@ -165,7 +165,7 @@ export function DiagnosticsSheet({
                     boxShadow: active ? undefined : palette.shadowRing,
                   }}
                 >
-                  <Text style={[type.mono, { fontSize: 14, color: active ? palette.accentInk : palette.ink }]}>{SCENARIO_LABEL[mode]}</Text>
+                  <Text maxFontSizeMultiplier={SCALE.chrome} style={[type.mono, { fontSize: 14, color: active ? palette.accentInk : palette.ink }]}>{SCENARIO_LABEL[mode]}</Text>
                 </PressableScale>
               );
             })}
