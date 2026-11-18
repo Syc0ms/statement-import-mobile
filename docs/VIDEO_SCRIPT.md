@@ -8,7 +8,7 @@
 управления → добавить «Запись экрана»). Рядом на Mac — терминал со счётчиками:
 
 ```bash
-watch -n1 'curl -s http://127.0.0.1:8787/__test/state | python3 -m json.tool'
+while true; do clear; curl -s http://127.0.0.1:8787/__test/state | python3 -m json.tool; sleep 1; done
 ```
 
 Перед каждым сценарием: «Тест-панель → Сбросить mock», затем нужный сценарий. На телефоне в
