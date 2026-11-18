@@ -48,12 +48,12 @@ npm test
 
 Проверка типов: `npm run typecheck`.
 
-Фактический результат (19 ноября 2026, Node 26.7.0, macOS):
+Фактический результат из свежего `git clone` → `npm ci --prefix app` → `npm test` (19 ноября 2026, Node 26.7.0, macOS):
 
 ```
 kit:  ℹ tests 6  ℹ pass 6  ℹ fail 0
 app:  Test Suites: 6 passed, 6 total
-      Tests:       51 passed, 51 total
+      Tests:       52 passed, 52 total
 ```
 
 <details>
@@ -83,6 +83,7 @@ PASS test/unit/presentation.test.ts
   ✓ presentation honesty rules › unknown upload outcome offers a key lookup first and a same-key resend second
   ✓ presentation honesty rules › by-key 404 offers "retry upload" as the primary action
   ✓ presentation honesty rules › notes an ignored stale status on the ready step
+  ✓ presentation honesty rules › labels a job recovered by key after a lost response, not as a plain 202
 PASS test/unit/money.test.ts
   ✓ money formatting from minor units › formats the fixed ready result exactly
   ✓ money formatting from minor units › groups thousands, keeps cents exact and handles zero-decimal currencies
@@ -266,6 +267,12 @@ node tools/record-mock-state.mjs http://127.0.0.1:8787 docs/evidence/run.jsonl  
 **Физический iPhone 14 Pro:** Release-сборка собрана, установлена (`devicectl`) и запускается;
 mock доступен по LAN. Сценарии на телефоне проходит владелец вручную по
 `docs/VIDEO_SCRIPT.md` с записью экрана iOS — результаты: _<заполнить после прогона>_.
+
+**Крупный шрифт и тёмная тема (симулятор):** максимальный размер Dynamic Type (AX5) + тёмная
+тема — экраны «пусто», подтверждение и «Отчёт готов», все основные действия доступны прокруткой,
+ничего не обрезано (`docs/evidence/ios-sim/a11y/`). Найденная проблема (заголовок ломался по
+буквам) исправлена ограничением роста «хрома» до 1.4×, контента — до 2×.
+**iPhone SE (маленький экран) — НЕ ПРОВЕРЕН** отдельным прогоном.
 
 Найдено и исправлено во время прогона: долгий показ системного picker'а без обратной связи
 (добавлен индикатор), формулировка отказа по размеру (точные байты), подпись шага «Отправка»
