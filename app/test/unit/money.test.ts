@@ -1,4 +1,4 @@
-import { formatBytes, formatIsoDate, formatMinor, monthlyTotalMinor } from '../../src/core/money';
+import { formatByteCount, formatBytes, formatIsoDate, formatMinor, monthlyTotalMinor } from '../../src/core/money';
 import { parseJob } from '../../src/core/importApi';
 
 describe('money formatting from minor units', () => {
@@ -35,6 +35,7 @@ describe('money formatting from minor units', () => {
     expect(formatBytes(112)).toBe('112 Б');
     expect(formatBytes(33882)).toBe('33.1 КБ');
     expect(formatBytes(10 * 1024 * 1024 + 1)).toBe('10.0 МБ');
+    expect(formatByteCount(10485771)).toBe('10\u202f485\u202f771');
   });
 });
 

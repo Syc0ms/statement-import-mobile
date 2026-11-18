@@ -4,7 +4,7 @@ import Animated, { FadeInDown, FadeOut, LinearTransition, ReduceMotion } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ImportController, ImportView } from '../core/importController';
-import { formatBytes, formatIsoDate, formatMinor, monthlyTotalMinor } from '../core/money';
+import { formatByteCount, formatBytes, formatIsoDate, formatMinor, monthlyTotalMinor } from '../core/money';
 import { presentOperation, type ActionId } from '../core/presentation';
 import type { ImportOperation, RecurringCharge } from '../core/types';
 import type { Rejection } from '../core/validation';
@@ -97,6 +97,22 @@ async function pickInto(controller: ImportController) {
   }
 }
 
+/** The system picker can take a few seconds to appear; show progress and ignore repeat taps. */
+function usePicker(controller: ImportController, before?: () => Promise<void>) {
+  const [opening, setOpening] = useState(false);
+  const open = async () => {
+    if (opening) return;
+    setOpening(true);
+    try {
+      if (before) await before();
+      await pickInto(controller);
+    } finally {
+      setOpening(false);
+    }
+  };
+  return { opening, open: () => void open() };
+}
+
 function Loading({ label }: { label: string }) {
   const palette = usePalette();
   return (
@@ -117,6 +133,7 @@ const NOTICE_TEXT = {
 
 function Idle({ controller, notice }: { controller: ImportController; notice: keyof typeof NOTICE_TEXT | null }) {
   const palette = usePalette();
+  const picker = usePicker(controller);
   const points = [
     'Формат проверяется по содержимому файла, а не по расширению.',
     'Если ответ сервера потеряется, повторная отправка не создаст второй импорт.',
@@ -151,7 +168,12 @@ function Idle({ controller, notice }: { controller: ImportController; notice: ke
         </Card>
       </Animated.View>
       <Animated.View entering={enter(3)} exiting={exit}>
-        <Button label="Выбрать файл" onPress={() => void pickInto(controller)} accessibilityHint="Открывает системный выбор файла" />
+        <Button
+          label={picker.opening ? 'Открываем выбор файла' : 'Выбрать файл'}
+          busy={picker.opening}
+          onPress={picker.open}
+          accessibilityHint="Открывает системный выбор файла"
+        />
       </Animated.View>
     </>
   );
@@ -162,7 +184,7 @@ function rejectionText(rejection: Rejection): { title: string; body: string } {
     case 'too_large':
       return {
         title: 'Файл больше 10 МиБ',
-        body: `Размер ${formatBytes(rejection.size)}, допустимо до ${formatBytes(rejection.limit)}. Размер взят из данных файла, содержимое не читалось.`,
+        body: `Размер ${formatByteCount(rejection.size)} байт, допустимо до ${formatByteCount(rejection.limit)} байт (10 МиБ). Размер взят из данных файла, содержимое не читалось.`,
       };
     case 'empty':
       return { title: 'Файл пустой', body: 'В файле нет данных.' };
@@ -179,6 +201,7 @@ function rejectionText(rejection: Rejection): { title: string; body: string } {
 
 function LocalRejection({ controller, rejection, name }: { controller: ImportController; rejection: Rejection; name: string }) {
   const palette = usePalette();
+  const picker = usePicker(controller, () => controller.cancelDraft());
   const text = rejectionText(rejection);
   return (
     <>
@@ -200,13 +223,7 @@ function LocalRejection({ controller, rejection, name }: { controller: ImportCon
         </Card>
       </Animated.View>
       <Animated.View entering={enter(2)} exiting={exit} style={{ gap: space.xs }}>
-        <Button
-          label="Выбрать другой файл"
-          onPress={async () => {
-            await controller.cancelDraft();
-            await pickInto(controller);
-          }}
-        />
+        <Button label="Выбрать другой файл" busy={picker.opening} onPress={picker.open} />
         <Button label="Закрыть" variant="quiet" onPress={() => void controller.cancelDraft()} />
       </Animated.View>
     </>

@@ -104,10 +104,11 @@ function buildSteps(op: ImportOperation): TimelineStep[] {
   if (phase === 'not_found') Object.assign(sent, { state: 'problem', tone: 'warning', detail: 'по ключу не найдено (404)' });
   if (phase === 'rejected') Object.assign(sent, { state: 'problem', tone: 'danger', detail: errorText(op.upload.lastError) });
   if (phase === 'accepted') {
-    Object.assign(sent, {
-      state: 'done',
-      detail: op.upload.attempts > 1 ? `принято · попыток ${op.upload.attempts}` : 'принято (202)',
-    });
+    const recoveredByKey = op.history.some((entry) => entry.kind === 'upload_unknown');
+    let detail = 'принято (202)';
+    if (recoveredByKey) detail = 'найдено по ключу после потери ответа';
+    else if (op.upload.attempts > 1) detail = `принято · попыток ${op.upload.attempts}`;
+    Object.assign(sent, { state: 'done', detail });
   }
 
   const serverStep = (id: 'queued' | 'processing' | 'ready'): TimelineStep => {

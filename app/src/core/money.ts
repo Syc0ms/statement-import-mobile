@@ -58,6 +58,11 @@ export function formatIsoDate(iso: string): string {
   return `${day} ${MONTHS_RU[month - 1]} ${match[1]}`;
 }
 
+/** Exact byte count with thin-space grouping: 10485771 -> "10 485 771". */
+export function formatByteCount(bytes: number): string {
+  return String(Math.trunc(bytes)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
+}
+
 /** Human-readable byte size: 112 Б, 33.1 КБ, 10.0 МБ (binary units). */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} Б`;

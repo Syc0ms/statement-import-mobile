@@ -104,4 +104,19 @@ describe('presentation honesty rules', () => {
     expect(p.title).toBe('Отчёт готов');
     expect(p.steps.find((step) => step.id === 'ready')?.detail).toContain('processing/2 проигнорирован');
   });
+
+  it('labels a job recovered by key after a lost response, not as a plain 202', () => {
+    const p = presentOperation(
+      op({
+        job: readyJob,
+        history: [
+          { at: 1, kind: 'upload_started', attempt: 1 },
+          { at: 2, kind: 'upload_unknown', error: 'network' },
+          { at: 3, kind: 'upload_accepted' },
+        ],
+      }),
+      activity,
+    );
+    expect(p.steps[0]).toMatchObject({ state: 'done', detail: 'найдено по ключу после потери ответа' });
+  });
 });
