@@ -1,0 +1,1 @@
+{"mode":"happy","stats":{"createRequests":1,"newJobs":1,"duplicateHits":0,"acceptedBytes":112,"deleteRequests":2},"jobs":[{"jobId":"job-demo-001","status":"deleted","revision":5,"sha256":"2d2eb2233378820aeeecfc3a5d54d1ecb5a0e48eaa1e672478acaa3822890c7c","bytes":112}]}
