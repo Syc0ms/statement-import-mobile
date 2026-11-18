@@ -1,0 +1,12 @@
+{
+  "name": "mobile-engineer-test-task",
+  "private": true,
+  "description": "Statement import client (app/) and the unmodified candidate kit (kit/).",
+  "scripts": {
+    "mock": "npm --prefix kit start",
+    "mock:lan": "HOST=0.0.0.0 npm --prefix kit start",
+    "fixtures:oversize": "npm --prefix kit run fixtures:oversize",
+    "test": "npm --prefix kit test && npm --prefix app test",
+    "typecheck": "npm --prefix app run typecheck"
+  }
+}
