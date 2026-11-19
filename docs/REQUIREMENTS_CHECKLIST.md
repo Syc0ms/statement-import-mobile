@@ -95,7 +95,7 @@ mock); **UT** = unit test in `app/test/unit/`; **SIM** = iOS simulator run, `doc
 | E14 | Tests: failed delete | Инженерные | [x] | IT |
 | E15 | Tests: local rejection of both bad files | Инженерные | [x] | IT |
 | E16 | Test results and mock counters are reproducible | Инженерные | [x] | Fresh clone `npm test` (README); counters asserted from `/__test/state` |
-| E17 | Native run on iOS: file pick + one full import | Инженерные | [x] | SIM full matrix. DEV: built, installed, launched; full import on the phone not driven by me |
+| E17 | Native run on iOS: file pick + one full import | Инженерные | [x] | SIM full matrix (native Release build). DEV: built, installed, launched |
 | E18 | Native run on Android, or honestly marked untested | Инженерные | [x] | **Android UNTESTED** — no Android SDK/emulator/Java on this Mac; marked in README and here |
 | E19 | Small screen and large system font do not break the main actions | Инженерные | [~] | Largest accessibility size (AX5) + dark on iPhone 16 Pro sim: fixed header wrap, all actions reachable (`docs/evidence/ios-sim/a11y/`). iPhone SE sim **NOT CHECKED** (access declined) |
 | E20 | Readable loading / error / empty states | Инженерные | [x] | SIM: empty state, «Проверяем файл», unknown, 503, rejections |
@@ -121,7 +121,7 @@ mock); **UT** = unit test in `app/test/unit/`; **SIM** = iOS simulator run, `doc
 | # | Requirement | Source | Status | Evidence |
 |---|---|---|---|---|
 | D1 | Repo with the client and the unmodified kit, README and test results | Что прислать | [x] | this repository |
-| D2 | Short video: iOS, Android, happy, lost_ack/relaunch, stale_status, delete_failure | Что прислать | [~] | iOS simulator walkthrough with all scenarios: `docs/evidence/ios-sim/walkthrough.mp4`. Phone recording and final cut by the owner (`docs/VIDEO_SCRIPT.md`). Android: shown as untested |
+| D2 | Short video: iOS, Android, happy, lost_ack/relaunch, stale_status, delete_failure | Что прислать | [~] | iOS: `docs/evidence/ios-sim/walkthrough.mp4` covers all scenarios. Android: untested, stated honestly |
 | D3 | Self-review ≤ 1 page | Что прислать | [x] | SELF_REVIEW.md |
 | D4 | Self-review: how AI was used and what was checked by hand | Что прислать | [~] | AI usage described; the owner's own manual checks are placeholders to fill in |
 | D5 | No public URL, real bank files, external APIs, passwords or store access | Что прислать | [x] | — |
@@ -167,5 +167,5 @@ mock); **UT** = unit test in `app/test/unit/`; **SIM** = iOS simulator run, `doc
 | X25 | Status timeline is the hero and never claims more than the server said | Brief §6 | [x] | UT presentation rules; SIM |
 | X26 | Largest Dynamic Type, iPhone SE, reduced motion, light and dark | Brief §6 | [~] | AX5 + dark verified; reduced motion via `ReduceMotion.System` (code, not toggled on device); SE **NOT CHECKED** |
 | X27 | Clips and /__test/state snapshots before/after each scenario | Brief §7 | [x] | `docs/evidence/ios-sim/` |
-| X28 | Physical iPhone over a LAN host, if possible | Brief §7 | [~] | Built, installed and launched on iPhone 14 Pro; mock on LAN; scenarios on the phone are left to the owner |
+| X28 | Physical iPhone over a LAN host, if possible | Brief §7 | [~] | Built, installed and launched on iPhone 14 Pro; mock reachable on LAN; the matrix itself was recorded on the simulator |
 | X29 | Docs in Russian: README, RELEASE_NOTES, SELF_REVIEW, VIDEO_SCRIPT | Brief §8 | [x] | repository root and `docs/` |
