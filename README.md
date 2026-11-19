@@ -46,7 +46,8 @@ npm test
 счётчики через `GET /__test/state`. `oversize.csv` генерируется во временную папку той же логикой,
 что `make-oversize.mjs`; в `kit/` тесты ничего не пишут.
 
-Проверка типов: `npm run typecheck`.
+Проверка типов: `npm run typecheck`. Линтер (ESLint, конфигурация Expo, без предупреждений): `npm run lint`.
+То же самое (typecheck, lint, тесты) выполняет CI: `.github/workflows/ci.yml`.
 
 Фактический результат из свежего `git clone` → `npm ci --prefix app` → `npm test` (19 ноября 2026, Node 26.7.0, macOS):
 

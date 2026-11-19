@@ -34,11 +34,11 @@ export function PressableScale({
       {...rest}
       disabled={disabled}
       onPressIn={(event) => {
-        if (!isStatic) scale.value = withTiming(0.96, PRESS_EASE);
+        if (!isStatic) scale.set(withTiming(0.96, PRESS_EASE));
         rest.onPressIn?.(event);
       }}
       onPressOut={(event) => {
-        scale.value = withTiming(1, PRESS_EASE);
+        scale.set(withTiming(1, PRESS_EASE));
         rest.onPressOut?.(event);
       }}
     >

@@ -40,9 +40,9 @@ function StepDot({ step }: { step: TimelineStep }) {
   const scale = useSharedValue(step.state === 'pending' ? 0.82 : 1);
 
   useEffect(() => {
-    fillValue.value = withTiming(fill, EASE);
-    ringValue.value = withTiming(ring, EASE);
-    scale.value = withTiming(step.state === 'pending' ? 0.82 : 1, EASE);
+    fillValue.set(withTiming(fill, EASE));
+    ringValue.set(withTiming(ring, EASE));
+    scale.set(withTiming(step.state === 'pending' ? 0.82 : 1, EASE));
   }, [fill, ring, step.state, fillValue, ringValue, scale]);
 
   const animated = useAnimatedStyle(() => ({

@@ -67,11 +67,10 @@ export function DiagnosticsSheet({
 
   useEffect(() => {
     if (!visible) return;
-    setDraftUrl(settings.baseUrl);
     void refresh();
     const id = setInterval(() => void refresh(), 1000);
     return () => clearInterval(id);
-  }, [visible, refresh, settings]);
+  }, [visible, refresh]);
 
   const run = async (label: string, task: () => Promise<boolean>) => {
     setPending(label);
@@ -85,7 +84,13 @@ export function DiagnosticsSheet({
   const serverJob = localOp?.job ? state?.jobs.find((job) => job.jobId === localOp.job?.jobId) : undefined;
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+      onShow={() => setDraftUrl(settings.baseUrl)}
+    >
       <ScrollView
         style={{ flex: 1, backgroundColor: palette.canvas }}
         contentContainerStyle={{ padding: space.md, paddingTop: space.lg, paddingBottom: insets.bottom + space.xl, gap: space.md }}

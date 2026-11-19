@@ -278,7 +278,7 @@ function Confirm({ controller, draft }: { controller: ImportController; draft: {
 }
 
 function useCountdown(target: number | null): number | null {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (target === null) return;
     const id = setInterval(() => setNow(Date.now()), 500);

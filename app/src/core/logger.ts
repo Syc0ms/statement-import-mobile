@@ -76,7 +76,6 @@ export function keySuffix(key: string): string {
 export const consoleSink: LogSink = (record) => {
   const isDev = (globalThis as { __DEV__?: boolean }).__DEV__ === true;
   if (!isDev) return;
-  // eslint-disable-next-line no-console
   console.log(`[import] ${record.level} ${record.event}`, record.fields);
 };
 
