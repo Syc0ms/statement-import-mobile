@@ -24,7 +24,7 @@ function useStacked(): boolean {
   return useWindowDimensions().fontScale >= 1.35;
 }
 
-export function ImportScreen({ controller, onOpenDiagnostics }: { controller: ImportController; onOpenDiagnostics: () => void }) {
+export function ImportScreen({ controller, onOpenDiagnostics }: { controller: ImportController; onOpenDiagnostics?: () => void }) {
   const view = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
   const palette = usePalette();
   const insets = useSafeAreaInsets();
@@ -50,24 +50,26 @@ export function ImportScreen({ controller, onOpenDiagnostics }: { controller: Im
           >
             Выписка · импорт
           </Text>
-          <PressableScale
-            onPress={onOpenDiagnostics}
-            accessibilityRole="button"
-            accessibilityLabel="Тест-панель"
-            accessibilityHint="Открывает диагностику тестового сервера. Не часть продукта."
-            hitSlop={8}
-            style={{
-              minHeight: 36,
-              paddingHorizontal: 12,
-              borderRadius: radius.chip,
-              backgroundColor: palette.sunken,
-              justifyContent: 'center',
-            }}
-          >
-            <Text maxFontSizeMultiplier={SCALE.chrome} style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600' }]}>
-              Тест-панель
-            </Text>
-          </PressableScale>
+          {onOpenDiagnostics ? (
+            <PressableScale
+              onPress={onOpenDiagnostics}
+              accessibilityRole="button"
+              accessibilityLabel="Тест-панель"
+              accessibilityHint="Открывает диагностику тестового сервера. Не часть продукта."
+              hitSlop={8}
+              style={{
+                minHeight: 36,
+                paddingHorizontal: 12,
+                borderRadius: radius.chip,
+                backgroundColor: palette.sunken,
+                justifyContent: 'center',
+              }}
+            >
+              <Text maxFontSizeMultiplier={SCALE.chrome} style={[type.footnote, { color: palette.inkSecondary, fontWeight: '600' }]}>
+                Тест-панель
+              </Text>
+            </PressableScale>
+          ) : null}
         </View>
         <ViewForState view={view} controller={controller} />
       </ScrollView>

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AppState, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { TEST_TOOLS_ENABLED } from './src/platform/buildFlags';
 import { api, controller, settings } from './src/platform/services';
 import { DiagnosticsSheet } from './src/ui/DiagnosticsSheet';
 import { ImportScreen } from './src/ui/ImportScreen';
@@ -15,7 +16,8 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      await settings.load();
+      // The API host override exists only in test builds.
+      if (TEST_TOOLS_ENABLED) await settings.load();
       if (!cancelled) await controller.restore();
     })();
     // Polling and recovery run only while the app is in the foreground.
@@ -30,14 +32,16 @@ export default function App() {
     <SafeAreaProvider>
       <View style={{ flex: 1, backgroundColor: palette.canvas }}>
         <StatusBar style={palette.scheme === 'dark' ? 'light' : 'dark'} />
-        <ImportScreen controller={controller} onOpenDiagnostics={() => setDiagnostics(true)} />
-        <DiagnosticsSheet
-          visible={diagnostics}
-          onClose={() => setDiagnostics(false)}
-          api={api}
-          settings={settings}
-          controller={controller}
-        />
+        <ImportScreen controller={controller} onOpenDiagnostics={TEST_TOOLS_ENABLED ? () => setDiagnostics(true) : undefined} />
+        {TEST_TOOLS_ENABLED ? (
+          <DiagnosticsSheet
+            visible={diagnostics}
+            onClose={() => setDiagnostics(false)}
+            api={api}
+            settings={settings}
+            controller={controller}
+          />
+        ) : null}
       </View>
     </SafeAreaProvider>
   );

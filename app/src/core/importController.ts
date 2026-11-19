@@ -127,6 +127,21 @@ export class ImportController {
     this.renderOperation();
   }
 
+  /**
+   * Takes the single action lock synchronously, before any await, so a second tap cannot
+   * start the same (or another) request while one is pending. Returns false if taken.
+   */
+  private claim(action: BusyAction): boolean {
+    if (this.activity.busy !== null) return false;
+    this.setActivity({ busy: action });
+    return true;
+  }
+
+  /** Releases the lock only if this action still holds it, so one request never clears another's. */
+  private release(action: BusyAction, patch: Partial<Activity> = {}): void {
+    this.setActivity({ ...patch, ...(this.activity.busy === action ? { busy: null } : {}) });
+  }
+
   // ---- Lifecycle -----------------------------------------------------------------------------
 
   /** Called once on launch. Restores the record and resumes without resending anything. */
@@ -204,6 +219,7 @@ export class ImportController {
     if (this.op) return;
     this.setView({ kind: 'checking' });
     const { files } = this.deps;
+    let adopted: string | null = null;
     try {
       const size = (await files.size(picked.uri)) ?? picked.size;
       if (size === null) throw new Error('size unavailable');
@@ -219,6 +235,7 @@ export class ImportController {
         return;
       }
       const uri = await files.adopt(picked.uri);
+      adopted = uri;
       const head = size > 0 ? await files.readHead(uri, SNIFF_BYTES) : null;
       const result = validateFile({ size, head, name: picked.name });
       if (!result.ok) {
@@ -230,7 +247,8 @@ export class ImportController {
       this.deps.logger.log('info', 'validation.accepted', { format: result.format, bytes: size });
       this.setView({ kind: 'confirm', draft: { uri, name: picked.name, size, format: result.format } });
     } catch {
-      await files.delete(picked.uri).catch(() => undefined);
+      // Remove whichever copy exists: the picker's, or our staged copy if it was already moved.
+      await files.delete(adopted ?? picked.uri).catch(() => undefined);
       this.setView({ kind: 'idle', notice: 'pick_failed' });
     }
   }
@@ -248,6 +266,8 @@ export class ImportController {
   /** Generates the key, persists the record, and only then sends the bytes. */
   async confirm(): Promise<void> {
     if (this.view.kind !== 'confirm' || this.op) return;
+    // Synchronous guard: a second tap before the record is persisted must not create a second key.
+    if (!this.claim('sending')) return;
     const { draft } = this.view;
     const now = this.deps.scheduler.now();
     let op: ImportOperation;
@@ -269,6 +289,7 @@ export class ImportController {
     } catch {
       // Without a durable record the upload must not start.
       await this.deps.files.delete(draft.uri).catch(() => undefined);
+      this.release('sending');
       this.setView({ kind: 'idle', notice: 'storage_failed' });
       return;
     }
@@ -280,17 +301,20 @@ export class ImportController {
   /** User-initiated resend of the same operation: same key, same verified bytes. */
   async retryUpload(): Promise<void> {
     const op = this.op;
-    if (!op || this.activity.busy) return;
+    if (!op) return;
     if (op.upload.phase !== 'unknown' && op.upload.phase !== 'not_found') return;
+    if (!this.claim('sending')) return;
     this.cancelTimer();
     const uri = op.file.uri;
     if (!uri || !(await this.deps.files.exists(uri))) {
+      this.release('sending');
       await this.commit({ ...op, file: { ...op.file, uri: null }, upload: { ...op.upload, lastError: 'copy_missing' } });
       return;
     }
     const sha256 = await this.deps.files.sha256(uri).catch(() => null);
     if (sha256 !== op.file.sha256) {
       // Never send different bytes under the same key.
+      this.release('sending');
       await this.commit({ ...op, upload: { ...op.upload, lastError: 'copy_changed' } });
       return;
     }
@@ -311,7 +335,7 @@ export class ImportController {
   async reattachFile(picked: PickedFile): Promise<'reattached' | 'different_file' | 'failed'> {
     const op = this.op;
     if (!op || op.file.uri || (op.upload.phase !== 'unknown' && op.upload.phase !== 'not_found')) return 'failed';
-    this.setActivity({ busy: 'reattaching' });
+    if (!this.claim('reattaching')) return 'failed';
     try {
       const uri = await this.deps.files.adopt(picked.uri);
       const sha256 = await this.deps.files.sha256(uri);
@@ -325,18 +349,21 @@ export class ImportController {
       await this.deps.files.delete(picked.uri).catch(() => undefined);
       return 'failed';
     } finally {
-      this.setActivity({ busy: null });
+      this.release('reattaching');
     }
   }
 
+  /** Sends the bytes. The caller holds the 'sending' lock; it is released here. */
   private async send(op: ImportOperation): Promise<void> {
     const key = op.idempotencyKey;
     const uri = op.file.uri;
-    if (!uri) return;
-    this.setActivity({ busy: 'sending' });
+    if (!uri) {
+      this.release('sending');
+      return;
+    }
     const outcome = await this.deps.api.createImport({ key, fileName: op.file.name, fileUri: uri });
     if (!this.isCurrent(key)) return;
-    this.setActivity({ busy: null, lastCheckedAt: this.deps.scheduler.now() });
+    this.release('sending', { lastCheckedAt: this.deps.scheduler.now() });
     switch (outcome.kind) {
       case 'accepted':
         this.deps.logger.log('info', 'upload.accepted', { jobId: outcome.job.jobId, revision: outcome.job.revision });
@@ -373,14 +400,14 @@ export class ImportController {
   /** Recovery after an unknown outcome: ask the server whether this key created a job. */
   async lookupNow(): Promise<void> {
     const op = this.op;
-    if (!op || this.activity.busy) return;
+    if (!op) return;
     if (op.upload.phase !== 'unknown' && op.upload.phase !== 'not_found') return;
+    if (!this.claim('looking_up')) return;
     this.cancelTimer();
     const key = op.idempotencyKey;
-    this.setActivity({ busy: 'looking_up' });
     const outcome = await this.deps.api.lookupByKey(key);
     if (!this.isCurrent(key)) return;
-    this.setActivity({ busy: null, lastCheckedAt: this.deps.scheduler.now() });
+    this.release('looking_up', { lastCheckedAt: this.deps.scheduler.now() });
     const current = this.requireOp();
     switch (outcome.kind) {
       case 'found':
@@ -456,13 +483,15 @@ export class ImportController {
   /** One GET of the job. Also used by the manual "refresh" action. */
   async pollOnce(manual = false): Promise<void> {
     const op = this.op;
-    if (!op?.job || op.jobMissing || this.activity.busy) return;
+    if (!op?.job || op.jobMissing) return;
+    if (manual ? !this.claim('refreshing') : this.activity.busy !== null) return;
     this.cancelTimer();
     const key = op.idempotencyKey;
-    if (manual) this.setActivity({ busy: 'refreshing' });
     const outcome = await this.deps.api.getJob(op.job.jobId);
     if (!this.isCurrent(key)) return;
-    this.setActivity({ busy: null, lastCheckedAt: this.deps.scheduler.now() });
+    // An automatic poll never takes the lock, so it must never clear someone else's.
+    if (manual) this.release('refreshing', { lastCheckedAt: this.deps.scheduler.now() });
+    else this.setActivity({ lastCheckedAt: this.deps.scheduler.now() });
     switch (outcome.kind) {
       case 'found': {
         this.setActivity({ unreachable: false });
@@ -515,9 +544,10 @@ export class ImportController {
   /** Starts or retries deletion. The delete key is persisted before the first DELETE. */
   async requestDelete(): Promise<void> {
     const op = this.op;
-    if (!op?.job || op.jobMissing || this.activity.busy) return;
+    if (!op?.job || op.jobMissing) return;
     if (op.job.status === 'deleted' || op.job.status === 'deleting') return;
     if (op.deletion && op.deletion.phase !== 'failed' && op.deletion.phase !== 'unknown') return;
+    if (!this.claim('deleting')) return;
     this.cancelTimer();
     const deletion = op.deletion
       ? { ...op.deletion, phase: 'sending' as const, attempts: op.deletion.attempts + 1, lastError: undefined }
@@ -527,10 +557,9 @@ export class ImportController {
     const key = op.idempotencyKey;
     const jobId = op.job.jobId;
     this.deps.logger.log('info', 'delete.start', { attempt: deletion.attempts, jobId, keySuffix: keySuffix(deletion.key) });
-    this.setActivity({ busy: 'deleting' });
     const outcome = await this.deps.api.deleteJob(jobId, deletion.key);
     if (!this.isCurrent(key)) return;
-    this.setActivity({ busy: null, lastCheckedAt: this.deps.scheduler.now() });
+    this.release('deleting', { lastCheckedAt: this.deps.scheduler.now() });
     const current = this.requireOp();
     const currentDeletion = current.deletion ?? deletion;
     switch (outcome.kind) {

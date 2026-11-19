@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Alert, Modal, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -43,11 +43,27 @@ export function DiagnosticsSheet({
   const [pending, setPending] = useState<string | null>(null);
   const view = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
 
-  const refresh = useCallback(async () => {
-    const next = await api.mockState();
-    setState(next);
-    setReachable(next !== null);
-  }, [api]);
+  // One request at a time; a response older than the latest applied one is dropped.
+  const inFlight = useRef(false);
+  const requestSeq = useRef(0);
+  const appliedSeq = useRef(0);
+  const refresh = useCallback(
+    async (force = false) => {
+      if (inFlight.current && !force) return;
+      inFlight.current = true;
+      const seq = ++requestSeq.current;
+      try {
+        const next = await api.mockState();
+        if (seq < appliedSeq.current) return;
+        appliedSeq.current = seq;
+        setState(next);
+        setReachable(next !== null);
+      } finally {
+        if (seq === requestSeq.current) inFlight.current = false;
+      }
+    },
+    [api],
+  );
 
   useEffect(() => {
     if (!visible) return;
@@ -62,7 +78,7 @@ export function DiagnosticsSheet({
     const ok = await task();
     setPending(null);
     if (!ok) Alert.alert('Mock не ответил', `Проверьте, что mock запущен и доступен по адресу ${settings.baseUrl}.`);
-    await refresh();
+    await refresh(true);
   };
 
   const localOp = view.kind === 'operation' ? view.op : null;
@@ -123,7 +139,7 @@ export function DiagnosticsSheet({
                   onPress={async () => {
                     const ok = await settings.save(draftUrl);
                     if (!ok) Alert.alert('Неверный адрес', 'Нужен вид http://хост:порт.');
-                    else await refresh();
+                    else await refresh(true);
                   }}
                 />
               </View>
@@ -134,7 +150,7 @@ export function DiagnosticsSheet({
                   onPress={async () => {
                     await settings.save(DEFAULT_API_BASE_URL);
                     setDraftUrl(DEFAULT_API_BASE_URL);
-                    await refresh();
+                    await refresh(true);
                   }}
                 />
               </View>
@@ -224,16 +240,28 @@ export function DiagnosticsSheet({
           <Button
             label="Очистить данные на устройстве"
             variant="destructive"
-            onPress={() =>
+            onPress={() => {
+              const phase = localOp?.upload.phase;
+              if (phase === 'sending' || phase === 'unknown' || phase === 'not_found') {
+                // The key is the only way to find or delete a job the server may already have.
+                Alert.alert(
+                  'Сначала дождитесь ответа сервера',
+                  'Исход отправки ещё не известен. Если очистить данные сейчас, задание, которое сервер мог создать, нельзя будет найти и удалить с устройства. Проверьте по ключу или откажитесь от импорта на главном экране.',
+                );
+                return;
+              }
+              const stillOnServer = localOp?.job && localOp.job.status !== 'deleted' && !localOp.jobMissing;
               Alert.alert(
                 'Очистить данные на устройстве?',
-                'Удаляет запись операции и все временные копии файлов. Данные на сервере не трогает.',
+                stillOnServer
+                  ? 'Удаляет запись операции и временные копии. Импорт останется на сервере, и удалить его с устройства будет нельзя.'
+                  : 'Удаляет запись операции и все временные копии файлов. Данные на сервере не трогает.',
                 [
                   { text: 'Отмена', style: 'cancel' },
                   { text: 'Очистить', style: 'destructive', onPress: () => void controller.clearLocalData() },
                 ],
-              )
-            }
+              );
+            }}
           />
         </Section>
       </ScrollView>

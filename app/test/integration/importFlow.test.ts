@@ -421,3 +421,83 @@ describe('temp files and privacy', () => {
     expect(app.controller.getSnapshot()).toEqual({ kind: 'idle', notice: null });
   });
 });
+
+describe('concurrency guards (double taps, overlapping requests)', () => {
+  it('a double-tapped «Отправить» creates one operation, one key and one job', async () => {
+    const uploader = nodeUploader();
+    const app = launchApp({ mock, storage, files, uploader });
+    await app.controller.selectFile(await files.pick(CSV, 'statement.csv'));
+    await Promise.all([app.controller.confirm(), app.controller.confirm()]);
+    await waitFor(app.controller, isReady);
+    expect(uploader.calls).toHaveLength(1);
+    expect((await mock.state()).stats).toMatchObject({ createRequests: 1, newJobs: 1 });
+  });
+
+  it('a double-tapped retry sends once more, not twice', async () => {
+    await mock.scenario('lost_ack');
+    const uploader = nodeUploader();
+    const app = launchApp({ mock, storage, files, uploader, timing: { lookupBackoffMs: [60_000], pollBackoffMs: [50] } });
+    await pickAndConfirm(app, CSV, 'statement.csv');
+    await Promise.all([app.controller.retryUpload(), app.controller.retryUpload()]);
+    await waitFor(app.controller, isReady);
+    expect(uploader.calls).toHaveLength(2);
+    expect((await mock.state()).stats).toMatchObject({ createRequests: 2, newJobs: 1, duplicateHits: 1 });
+  });
+
+  it('a double-tapped delete sends one DELETE', async () => {
+    const app = launchApp({ mock, storage, files, uploader: nodeUploader() });
+    await pickAndConfirm(app, CSV, 'statement.csv');
+    await waitFor(app.controller, isReady);
+    await Promise.all([app.controller.requestDelete(), app.controller.requestDelete()]);
+    await waitFor(app.controller, (view) => view.kind === 'operation' && view.op.job?.status === 'deleted');
+    expect((await mock.state()).stats.deleteRequests).toBe(1);
+  });
+
+  it('a poll that finishes during a pending DELETE does not clear the delete lock', async () => {
+    const held: Record<string, (() => void) | null> = { GET: null, DELETE: null };
+    let gate = false;
+    const gatedFetch: FetchLike = async (url, init) => {
+      const response = await nodeFetch(url, init);
+      if (gate && (init.method === 'GET' || init.method === 'DELETE') && !url.includes('/__test/')) {
+        const body = await response.text();
+        await new Promise<void>((release) => {
+          held[init.method] = release;
+        });
+        return { status: response.status, text: async () => body };
+      }
+      return response;
+    };
+    const app = launchApp({ mock, storage, files, uploader: nodeUploader(), fetch: gatedFetch });
+    await pickAndConfirm(app, CSV, 'statement.csv');
+    await waitFor(app.controller, isReady);
+    gate = true;
+    const poll = app.controller.pollOnce(); // automatic poll, response held
+    await sleep(50);
+    const del = app.controller.requestDelete(); // takes the lock, response held
+    await sleep(50);
+    gate = false;
+    (held.GET as () => void)();
+    await poll;
+    const during = app.controller.getSnapshot();
+    expect(during.kind === 'operation' && during.activity.busy).toBe('deleting');
+    (held.DELETE as () => void)();
+    await del;
+    await waitFor(app.controller, (view) => view.kind === 'operation' && view.op.job?.status === 'deleted');
+  });
+});
+
+describe('temp copy cleanup on read errors', () => {
+  it('removes the staged copy if reading its header fails after it was moved', async () => {
+    class FailingHead extends NodeFiles {
+      async readHead(): Promise<Uint8Array<ArrayBuffer>> {
+        throw new Error('read failed');
+      }
+    }
+    const failing = new FailingHead(files.root);
+    const app = launchApp({ mock, storage, files: failing, uploader: nodeUploader() });
+    await app.controller.selectFile(await files.pick(CSV, 'statement.csv'));
+    expect(app.controller.getSnapshot()).toEqual({ kind: 'idle', notice: 'pick_failed' });
+    expect(await files.stagedFiles()).toEqual([]);
+  });
+});
+
