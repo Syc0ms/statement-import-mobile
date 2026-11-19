@@ -96,7 +96,7 @@ mock); **UT** = unit test in `app/test/unit/`; **SIM** = iOS simulator run, `doc
 | E15 | Tests: local rejection of both bad files | Инженерные | [x] | IT |
 | E16 | Test results and mock counters are reproducible | Инженерные | [x] | Fresh clone `npm test` (README); counters asserted from `/__test/state` |
 | E17 | Native run on iOS: file pick + one full import | Инженерные | [x] | SIM full matrix (native Release build). DEV: built, installed, launched |
-| E18 | Native run on Android, or honestly marked untested | Инженерные | [x] | **Android UNTESTED** — no Android SDK/emulator/Java on this Mac; marked in README and here |
+| E18 | Native run on Android, or honestly marked untested | Инженерные | [x] | **Android UNTESTED** — single Mac, no Android device, no SDK/emulator/Java, ~8 GB free disk (< ~10 GB needed); marked in README and here |
 | E19 | Small screen and large system font do not break the main actions | Инженерные | [~] | Largest accessibility size (AX5) + dark on iPhone 16 Pro sim: fixed header wrap, all actions reachable (`docs/evidence/ios-sim/a11y/`). iPhone SE sim **NOT CHECKED** (access declined) |
 | E20 | Readable loading / error / empty states | Инженерные | [x] | SIM: empty state, «Проверяем файл», unknown, 503, rejections |
 
