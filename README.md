@@ -53,18 +53,13 @@ npm test
 ```
 kit:  ℹ tests 6  ℹ pass 6  ℹ fail 0
 app:  Test Suites: 6 passed, 6 total
-      Tests:       52 passed, 52 total
+      Tests:       57 passed, 57 total
 ```
 
 <details>
 <summary>Список тестов клиента</summary>
 
 ```
-PASS test/unit/logger.test.ts
-  ✓ safe logger › drops the file name, whatever field it is passed in
-  ✓ safe logger › drops transaction descriptions, raw bytes and free text
-  ✓ safe logger › keeps allow-listed safe values
-  ✓ safe logger › drops a record whose event name is not a plain identifier
 PASS test/unit/jobReducer.test.ts
   ✓ reduceJob (revision rule) › applies the first snapshot
   ✓ reduceJob (revision rule) › applies strictly newer revisions in order
@@ -84,6 +79,11 @@ PASS test/unit/presentation.test.ts
   ✓ presentation honesty rules › by-key 404 offers "retry upload" as the primary action
   ✓ presentation honesty rules › notes an ignored stale status on the ready step
   ✓ presentation honesty rules › labels a job recovered by key after a lost response, not as a plain 202
+PASS test/unit/logger.test.ts
+  ✓ safe logger › drops the file name, whatever field it is passed in
+  ✓ safe logger › drops transaction descriptions, raw bytes and free text
+  ✓ safe logger › keeps allow-listed safe values
+  ✓ safe logger › drops a record whose event name is not a plain identifier
 PASS test/unit/money.test.ts
   ✓ money formatting from minor units › formats the fixed ready result exactly
   ✓ money formatting from minor units › groups thousands, keeps cents exact and handles zero-decimal currencies
@@ -118,6 +118,11 @@ PASS test/integration/importFlow.test.ts
   ✓ temp files and privacy › launch sweep removes orphaned copies but keeps the one owned by the active operation
   ✓ temp files and privacy › logs never contain the file name, the key, merchants or file content
   ✓ temp files and privacy › forget clears the record and every private copy
+  ✓ concurrency guards (double taps, overlapping requests) › a double-tapped «Отправить» creates one operation, one key and one job
+  ✓ concurrency guards (double taps, overlapping requests) › a double-tapped retry sends once more, not twice
+  ✓ concurrency guards (double taps, overlapping requests) › a double-tapped delete sends one DELETE
+  ✓ concurrency guards (double taps, overlapping requests) › a poll that finishes during a pending DELETE does not clear the delete lock
+  ✓ temp copy cleanup on read errors › removes the staged copy if reading its header fails after it was moved
 ```
 
 </details>
